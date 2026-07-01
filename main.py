@@ -15,7 +15,7 @@ def main():
     def carregar_dados(empresas):
         texto_tickers = " ".join(empresas)
         dados_acao = yf.Tickers(texto_tickers)
-        cotacoes_acao = dados_acao.history(start="2025-01-01", end="2026-06-20" ) #"YYYY-MM-DD"
+        cotacoes_acao = dados_acao.history(start="2023-01-01", end="2026-06-20" ) #"YYYY-MM-DD"
         print(cotacoes_acao)
         cotacoes_acao = cotacoes_acao["Close"] #a função tickers já retorna um Dataframe
         return cotacoes_acao
@@ -71,11 +71,18 @@ def main():
         print(dados)
         dados = dados.rename(columns={"Close" : acao_unica})
         print(dados)
-        
-    lista_com_performace = list()
 
-    for acao in lista_acoes:
+    # Calculo Performace
+    #   
+    lista_com_performace = list()
+    carteira = [1000 for acao in lista_acoes]
+    total_inicial_carteira = sum(carteira)
+
+    for i, acao in enumerate(lista_acoes):
         performace_ativo = (dados[acao].iloc[-1] / dados[acao].iloc[0]) -1
+
+        carteira[i] = carteira[i] * (1 + performace_ativo)
+
         if performace_ativo > 0:
             lista_com_performace.append(f"{acao}: :green[{performace_ativo:.1%}]")
         elif performace_ativo < 0:
@@ -83,14 +90,28 @@ def main():
         elif performace_ativo == 0:
             lista_com_performace.append(f"{acao}: :red[{performace_ativo:.1%}]")
         else:        
-            lista_com_performace.append(f"{acao}: :yellow[{"Não há dados para o periodo selecionado"}]")
+            lista_com_performace.append(f"{acao}: :yellow[{"Não há dados para o periodo selecionado."}]")
     
+
     st.write(f'''
         ### Performace dos Ativos
         Essa foi a performace de cada ativo selecionado:
         ''')
     for performace in lista_com_performace:
-        st.write(performace)    
+        st.write(performace)  
+
+    total_final_carteira = sum(carteira)
+    performace_carteira = total_final_carteira / total_inicial_carteira - 1
+    texto_performace = "Performace da carteira com todos ativos: "
+
+    print("totais da carteira: ", total_inicial_carteira, "|", f"{total_final_carteira:.2f}", "|", f'{performace_carteira:.2%}')
+
+    if performace_carteira > 0:
+        st.write(f"{texto_performace}:green[{performace_carteira:.1%}]")
+    elif performace_carteira < 0:
+        st.write(f"{texto_performace}:red[{performace_carteira:.1%}]")
+    else:
+        st.write(f"{texto_performace}:{performace_carteira:.1%}")
 
     # criar a interface
 
